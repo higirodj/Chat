@@ -23,7 +23,7 @@ IrcChatClient::~IrcChatClient()
     disconnect();
 }
 
-void IrcChatClient::readHandler(const std::string& message, const error_code& ec)
+void IrcChatClient::readHandler(std::string& message, const error_code& ec)
 {
     if (ec == error::eof || ec == error::connection_reset)
     {
@@ -33,16 +33,30 @@ void IrcChatClient::readHandler(const std::string& message, const error_code& ec
     }
     else
     {
-        //IrcMessage msg(message);
-        // if message is a ping
-        // session.asyncWrite("PONG \r\n");
-        // if registration complete,
-        // join channels
-        std::cout << message << "\n";
+        IrcMessage irc;
+        irc.parseMessage(message);
+        if (irc.getCommand() == "PING")
+        {
+            std::string server = *(irc.getParameters().begin());
+            sendPong(server);
+        }
+        if (irc.getCommand() == "376")
+        {
+            joinChannel(channel);
+        }
+        if (irc.getCommand()== "PRIVMSG")
+        {
+            std::cout << irc.getPrefix().nick << " ";
+        }
+        for (auto param : irc.getParameters())
+        {
+            std::cout << param << " ";
+        }
+        std::cout << "\n";
     }
 }
 
-void IrcChatClient::writeHandler(const bool& isConnected)
+void IrcChatClient::writeHandler(const bool& isConnected, const std::string& message)
 {
     if(!isConnected)
     {
@@ -62,9 +76,9 @@ void IrcChatClient::connectionHandler(const tcp::resolver::iterator& iterator, c
     }
     else
     {
-        std::cout << "Connected to: " << iterator->host_name() << " " << iterator->service_name() << "\n";
         std::string nickMsg = "NICK " + mNick + IrcMessage::IRC_MESSAGE_TERMINATION;
-        std::string userMsg = "USER " + mUser + IrcMessage::IRC_MESSAGE_TERMINATION;
+        std::string userMsg = "USER " + mUser + " " + mUserMode + " " + IrcMessage::IRC_WILD_CARD_SYMBOL + " " +
+        IrcMessage::IRC_PREFIX_SYMBOL + mUser + IrcMessage::IRC_MESSAGE_TERMINATION;
         session->asyncWrite(nickMsg);
         session->asyncWrite(userMsg);
         session->asyncRead(boost::bind(&IrcChatClient::readHandler, this, _1, _2));
@@ -82,21 +96,46 @@ void IrcChatClient::resetConnection()
     establishConnection();
 }
 
-void IrcChatClient::sendMessage(const std::string& message)
+void IrcChatClient::sendMsg(const std::string& message)
 {
-    session->asyncWrite(message, boost::bind(&IrcChatClient::writeHandler, this, _1));
+    std::string tmpMsg = message + IrcMessage::IRC_MESSAGE_TERMINATION;
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
+}
+
+void IrcChatClient::sendPrivMsg(const std::string& msgtarget, const std::string& message)
+{
+    std::string tmpMsg = "PRIVMSG " + msgtarget + " " + message + IrcMessage::IRC_MESSAGE_TERMINATION;
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
+}
+
+void IrcChatClient::sendPing(const std::string& server)
+{
+    std::string tmpMsg = "PING " + server + IrcMessage::IRC_MESSAGE_TERMINATION;
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
+}
+
+void IrcChatClient::sendPong(const std::string& server)
+{
+    std::string tmpMsg = "PONG " + server + IrcMessage::IRC_MESSAGE_TERMINATION;
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
 }
 
 void IrcChatClient::joinChannel(const std::string& message)
 {
     std::string tmpMsg = "JOIN " + message + IrcMessage::IRC_MESSAGE_TERMINATION;
-    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1));
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
 }
 
 void IrcChatClient::leaveChannel(const std::string& message)
 {
     std::string tmpMsg = "PART " + message + IrcMessage::IRC_MESSAGE_TERMINATION;
-    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1));
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
+}
+
+void IrcChatClient::leaveNetwork(const std::string& message)
+{
+    std::string tmpMsg = "QUIT " + message + IrcMessage::IRC_MESSAGE_TERMINATION;
+    session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
 }
 
 void IrcChatClient::disconnect()

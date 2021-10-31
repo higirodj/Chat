@@ -4,12 +4,6 @@
 //
 //  Created by Julius Higiro on 10/30/21.
 //
-// https://tools.ietf.org/html/rfc1459 Internet Relay Chat Protocol
-// https://tools.ietf.org/html/rfc2810 Internet Relay Chat:Architecture
-// https://tools.ietf.org/html/rfc2811 Internet Relay Chat:Channel Management
-// https://tools.ietf.org/html/rfc2812 Internet Relay Chat:Client Protocol
-// https://tools.ietf.org/html/rfc2813 Internet Relay Chat:Server Protocol
-
 
 #pragma once
 #include <stdio.h>
@@ -31,23 +25,30 @@ namespace chat
         public:
             IrcChatClient(io_context& io_context);
             virtual ~IrcChatClient();
-            void readHandler(const std::string& message, const error_code& ec);
-            void writeHandler(const bool& isConnected);
+            void readHandler(std::string& message, const error_code& ec);
+            void writeHandler(const bool& isConnected, const std::string& message);
             void connectionHandler(const tcp::resolver::iterator& iterator, const error_code& ec);
             void establishConnection();
             void resetConnection();
-            void sendMessage(const std::string& message);
+            void sendMsg(const std::string& message);
+            void sendPrivMsg(const std::string& msgtarget, const std::string& message);
+            void sendPing(const std::string& message);
+            void sendPong(const std::string& message);
             void joinChannel(const std::string& message);
             void leaveChannel(const std::string& message);
+            void leaveNetwork(const std::string& message);
             void disconnect();
+            std::string getNick() { return mNick;}
             
         private:
             io_context& mIoContext;
             std::unique_ptr<Session> session;
             steady_timer mResetTimer;
             std::string mNick = "kai";
-            std::string mUser = "kai 8 * :kai";
-            const std::string mHostName = "127.0.0.1";
+            std::string mUser = "kai";
+            std::string mUserMode = "8";
+            std::string channel = "#test";
+            const std::string mHostName = "localhost";
             const std::string mPortNumber = "6667";
             static const int RECONNECT_TIME;
         };

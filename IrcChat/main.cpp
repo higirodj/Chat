@@ -8,12 +8,11 @@
 #include <iostream>
 #include <exception>
 #include <thread>
-#include <boost/asio.hpp>
-#include "Session.hpp"
-
+#include "IrcChatClient.hpp"
 using namespace chat::irc;
 
-int main(int argc, const char * argv[]) {
+int main(int argc, const char * argv [])
+{
     try
     {
         io_context io_context;
@@ -22,25 +21,22 @@ int main(int argc, const char * argv[]) {
         // Run io context event processing loop on another thread.
         std::thread io_thread([&io_context]() { io_context.run(); });
 
-        Session ss(io_context);
-
-        std::string hostname("localhost");
-        std::string port("6667");
-
-        ss.asyncConnect(hostname, port,
-            [&ss](const tcp::resolver::iterator& iterator, const error_code& ec)
+        IrcChatClient client(io_context);
+        client.establishConnection();
+        std::string input;
+        while (input != "quit")
         {
-            std::cout << "Connected to: " << iterator->host_name() << std::endl;
-            ss.asyncWrite("NICK kai\r\n");
-            ss.asyncWrite("USER kai 8 * :kai\r\n");
-            ss.asyncRead([](const std::string & read, const error_code& ec)
+            std::getline(std::cin, input);
+            if (!input.empty() && input != "quit")
             {
-                std::cout << read << "\n";
-            });
-        });
-    
-
-        ss.close();
+                client.sendPrivMsg("#test", input);
+            }
+        }
+        if (input == "quit")
+        {
+            client.leaveNetwork("I'm out");
+        }
+        client.disconnect();
         io_thread.join();
     }
     catch (std::exception & e)
@@ -50,3 +46,4 @@ int main(int argc, const char * argv[]) {
 
     return 0;
 }
+

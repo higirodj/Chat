@@ -1,6 +1,6 @@
 //
 //  Session.h
-//  ChatClient
+//  IrcChat
 //
 //  Created by Julius Higiro on 10/30/21.
 //
@@ -40,14 +40,14 @@ namespace chat
              * Param 1: A handler invoked during an asynchronous read.
              * Return none.
              */
-            void asyncRead(const std::function<void(const std::string &, const error_code &)> & handler);
+            void asyncRead(const std::function<void(std::string &, const error_code &)> & handler);
             /**
              * Performs an asynchronous write of messages to the server.
              * Param 1: A message to send to the server.
              * Param 2: A handler invoked during an asynchronous write.
              * Return none.
              */
-            void asyncWrite(const std::string& message, const std::function<void(const bool &)> & handler = {});
+            void asyncWrite(const std::string& message, const std::function<void(const bool &, const std::string &)> & handler = {});
             /**
              * Closes the socket
              * Param none.
@@ -61,7 +61,7 @@ namespace chat
             tcp::socket mSocket;
             std::queue<std::string> mMessageQueue;
             boost::asio::streambuf mReadBuffer;
-            std::function<void(const std::string &, const error_code &)> mReadHandler;
+            std::function<void(std::string &, const error_code &)> mReadHandler;
             bool mIsResolved;
             bool mIsConnected;
             /**

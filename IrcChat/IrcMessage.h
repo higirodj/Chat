@@ -15,16 +15,20 @@ namespace chat {
         {
         public:
             static const std::string IRC_MESSAGE_TERMINATION;
+            static const std::string IRC_WILD_CARD_SYMBOL;
+            static const std::string IRC_PREFIX_SYMBOL;
+            static const std::string IRC_AT_SYMBOL;
+            static const std::string IRC_BANG_SYMBOL;
             struct Prefix
             {
-                std::string rawPrefix;
+                std::string fullPrefix;
                 std::string nick;
                 std::string user;
                 std::string host;
                 
                 void reset()
                 {
-                    rawPrefix = "";
+                    fullPrefix = "";
                     nick = "";
                     user = "";
                     host = "";
@@ -36,18 +40,18 @@ namespace chat {
             
             /**
              * Splits message into tokens based on delimeter.
-             * Param:  msg the message that is tokenized..
+             * Param 1:  msg the message that is tokenized..
              * Param 2: sep delimeter.
              */
             std::vector<std::string> split(const std::string& msg, char sep);
             /**
              * Parses the raw irc message into its components.
-             * Param:  none.
+             * Param:  message to be parsed.
              */
             void parseMessage(std::string& msg);
             /**
              * Parses the prefix into its components.
-             * Param:  none.
+             * Param:  message prefix to be parsed.
              */
             void parsePrefix(const std::string& msg);
             /**
