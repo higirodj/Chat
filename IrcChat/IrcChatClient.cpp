@@ -132,7 +132,7 @@ void IrcChatClient::leaveChannel(const std::string& message)
     session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
 }
 
-void IrcChatClient::leaveNetwork(const std::string& message)
+void IrcChatClient::quitNetwork(const std::string& message)
 {
     std::string tmpMsg = "QUIT " + message + IrcMessage::IRC_MESSAGE_TERMINATION;
     session->asyncWrite(tmpMsg, boost::bind(&IrcChatClient::writeHandler, this, _1, _2));
