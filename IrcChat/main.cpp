@@ -34,7 +34,7 @@ int main(int argc, const char * argv [])
         }
         if (input == "quit")
         {
-            client.leaveNetwork("I'm out");
+            client.quitNetwork("I'm out");
         }
         client.disconnect();
         io_thread.join();
@@ -43,7 +43,7 @@ int main(int argc, const char * argv [])
     {
         std::cerr << "Exception: " << e.what() << std::endl;
     }
-
+    
     return 0;
 }
 
