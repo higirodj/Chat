@@ -7,7 +7,7 @@
 
 #include <iostream>
 #include "IrcChatClient.hpp"
-#include "IrcMessage.h"
+#include "ChatCommandHandler.hpp"
 
 using namespace chat::irc;
 
@@ -40,19 +40,11 @@ void IrcChatClient::readHandler(std::string& message, const error_code& ec)
             std::string server = *(irc.getParameters().begin());
             sendPong(server);
         }
-        if (irc.getCommand() == "376")
+        else
         {
-            joinChannel(channel);
+            ChatCommandHandler cmd;
+            cmd.invokeCommandHandler(irc);
         }
-        if (irc.getCommand()== "PRIVMSG")
-        {
-            std::cout << irc.getPrefix().nick << " ";
-        }
-        for (auto param : irc.getParameters())
-        {
-            std::cout << param << " ";
-        }
-        std::cout << "\n";
     }
 }
 
